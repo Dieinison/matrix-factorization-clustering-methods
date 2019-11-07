@@ -43,10 +43,10 @@ def simple_nmf(A, k, num_iter, init_W=None, init_H=None, print_enabled=False):
         H = np.random.rand(k, np.size(A, 1))
     else:
         H = init_H
-
+    delta = 0.0000001
     # Decompose the input matrix
     for n in range(num_iter):
-
+        
         # Update H
         W_TA = W.T @ A
         W_TWH = W.T @ W @ H + delta
