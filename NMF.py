@@ -71,7 +71,7 @@ def simple_nmf(A, k, num_iter, init_W=None, init_H=None, print_enabled=False):
 
 
 
-def nmf2(A, k, num_iter, init_W=None, init_H=None, print_enabled=False):
+def nmf2(X, k, num_iter, init_W=None, init_H=None, print_enabled=False):
     '''
     Run multiplicative updates to perform nonnegative matrix factorization on A.
     Return matrices W, H such that A = WH.
@@ -100,17 +100,17 @@ def nmf2(A, k, num_iter, init_W=None, init_H=None, print_enabled=False):
 
     if print_enabled:
         print('---------------------------------------------------------------------')
-        print('Frobenius norm ||A - WH||_F')
+        print('Frobenius norm ||X - WH||_F')
         print('')
 
     # Initialize W and H
     if init_W is None:
-        W = np.random.rand(np.size(A, 0), k)
+        W = np.random.rand(np.size(X, 0), k)
     else:
         W = init_W
 
     if init_H is None:
-        H = np.random.rand(k, np.size(A, 1))
+        H = np.random.rand(k, np.size(X, 1))
     else:
         H = init_H
     delta = 0.0000001
@@ -118,24 +118,24 @@ def nmf2(A, k, num_iter, init_W=None, init_H=None, print_enabled=False):
     for n in range(num_iter):
         
         # Update H
-        WH = W * H + delta
+        WH = W @ H + delta
 
         for a in range(np.size(H, 0)):
             for j in range(np.size(H, 1)):
-                H[a, j] = H[a, j] * (W.T[a,:] * X[:,j]/WH[:,j])
+                H[a, j] = H[a, j] * np.sum(W.T[a,:] * X[:,j]/WH[:,j])
 
         # Update W
-        WH = W*H + delta
+        WH = W@H + delta
 
         for i in range(np.size(W, 0)):
             for a in range(np.size(W, 1)):
-                W[i, a] = W[i, a] * (X[i,:] /  WH[i,:] * H.T[:,a])
+                W[i, a] = W[i, a] * np.sum(X[i,:] /  WH[i,:] * H.T[:,a])
 
         for j in range(W.shape[1]):
             W[:,j] = W[:,j]/np.sum(W[:,j])
 
         if print_enabled:
-            frob_norm = np.linalg.norm(A - W @ H, 'fro')
+            frob_norm = np.linalg.norm(X - W @ H, 'fro')
             print("iteration " + str(n + 1) + ": " + str(frob_norm))
 
     return W, H
