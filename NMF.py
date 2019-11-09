@@ -100,7 +100,7 @@ def nmf2(X, k, num_iter, init_W=None, init_H=None, print_enabled=False):
 
     if print_enabled:
         print('---------------------------------------------------------------------')
-        print('Frobenius norm ||X - WH||_F')
+        print('Frobenius norm ||A - WH||_F')
         print('')
 
     # Initialize W and H
@@ -122,14 +122,22 @@ def nmf2(X, k, num_iter, init_W=None, init_H=None, print_enabled=False):
 
         for a in range(np.size(H, 0)):
             for j in range(np.size(H, 1)):
-                H[a, j] = H[a, j] * np.sum(W.T[a,:] * X[:,j]/WH[:,j])
+                #H[a, j] = H[a, j] * (W.T[a,:] * X[:,j]/WH[:,j])
+                s = 0
+                for i in range(np.size(X, 0)):
+                    s += W.T[a,i]*X[i,j]/WH[i,j]
+                H[a,j] = H[a,j]*s
 
         # Update W
         WH = W@H + delta
 
         for i in range(np.size(W, 0)):
             for a in range(np.size(W, 1)):
-                W[i, a] = W[i, a] * np.sum(X[i,:] /  WH[i,:] * H.T[:,a])
+                #W[i, a] = W[i, a] * (X[i,:] /  WH[i,:] * H.T[:,a])
+                s = 0
+                for j in range(np.size(X, 1)):
+                    s += X[i,j]/WH[i,j]*H.T[j,a]
+                W[i,a] = W[i,a]*s
 
         for j in range(W.shape[1]):
             W[:,j] = W[:,j]/np.sum(W[:,j])
