@@ -71,12 +71,12 @@ def simple_nmf(A, k, num_iter, init_W=None, init_H=None, print_enabled=False):
 
 
 
-def nmf2(X, k, num_iter, init_W=None, init_H=None, print_enabled=False):
+def nmf_kl(X, k, num_iter, init_W=None, init_H=None, print_enabled=False):
     '''
-    Run multiplicative updates to perform nonnegative matrix factorization on A.
-    Return matrices W, H such that A = WH.
+    Run multiplicative updates to perform nonnegative matrix factorization on X.
+    Return matrices W, H such that X = WH.
     Parameters:
-        A: ndarray
+        X: ndarray
             - m by n matrix to factorize
         k: int
             - integer specifying the column length of W / the row length of H
@@ -97,10 +97,11 @@ def nmf2(X, k, num_iter, init_W=None, init_H=None, print_enabled=False):
     '''
 
     print('Applying multiplicative updates on the input matrix...')
+    #X = preprocessing.normalize(X, norm='l1', axis=0)
 
     if print_enabled:
         print('---------------------------------------------------------------------')
-        print('Frobenius norm ||A - WH||_F')
+        print('Frobenius norm ||X - WH||_F')
         print('')
 
     # Initialize W and H
@@ -118,29 +119,17 @@ def nmf2(X, k, num_iter, init_W=None, init_H=None, print_enabled=False):
     for n in range(num_iter):
         
         # Update H
-        WH = W @ H + delta
-
+        WH = W@H + delta
         for a in range(np.size(H, 0)):
             for j in range(np.size(H, 1)):
-                #H[a, j] = H[a, j] * (W.T[a,:] * X[:,j]/WH[:,j])
-                s = 0
-                for i in range(np.size(X, 0)):
-                    s += W.T[a,i]*X[i,j]/WH[i,j]
-                H[a,j] = H[a,j]*s
-
+                 H[a,j] = H[a,j]*np.sum(W[:,a]*X[:,j]/WH[:,j])/np.sum(W[:,a])
+        
         # Update W
         WH = W@H + delta
-
         for i in range(np.size(W, 0)):
-            for a in range(np.size(W, 1)):
-                #W[i, a] = W[i, a] * (X[i,:] /  WH[i,:] * H.T[:,a])
-                s = 0
-                for j in range(np.size(X, 1)):
-                    s += X[i,j]/WH[i,j]*H.T[j,a]
-                W[i,a] = W[i,a]*s
-
-        for j in range(W.shape[1]):
-            W[:,j] = W[:,j]/np.sum(W[:,j])
+            for a in range(np.size(W, 1)):                
+                W[i,a] = W[i,a]*np.sum(H[a,:]*X[i,:]/WH[i,:])/np.sum(H[a,:])
+        
 
         if print_enabled:
             frob_norm = np.linalg.norm(X - W @ H, 'fro')
